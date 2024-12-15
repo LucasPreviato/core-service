@@ -1,0 +1,33 @@
+//🧩Don't Edit this file.✨Generated in Sun Dec 15 2024 18:36:07 GMT-0300 (Horário Padrão de Brasília)✨
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  theme    = "dark"
+  output   = "../ERD.png"
+}
+
+model Company {
+  id          String   @id @default(cuid()) @map("company_id")
+  companyName String   @map("company_name")
+  tradingName String?  @map("trading_name")
+  cnpj        String   @map("cnpj")
+  address     String?  @map("address")
+  city        String?  @map("city")
+  state       String?  @map("state")
+  zipCode     String?  @map("zip_code")
+  phone       String?  @map("phone")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([companyName, cnpj])
+  @@map("companies")
+}
