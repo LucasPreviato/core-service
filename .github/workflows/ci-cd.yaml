@@ -9,15 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.12.0
 
-      - name: Install
-        run: pnpm install
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8 # Utilize a versão mais recente ou a que você preferir
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Test
         run: pnpm test
@@ -43,11 +49,11 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/dev/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:develop -n dev
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:develop -n dev
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/prod/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:main -n prod
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:main -n prod
           elif [[ "${{ github.ref_name }}" =~ ^release/ ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/homolog/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:${{ github.ref_name }} -n homolog
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:${{ github.ref_name }} -n homolog
           fi
