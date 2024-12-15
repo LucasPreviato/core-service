@@ -1,0 +1,58 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [develop, main]
+    branches-ignore:
+      - 'release/*'
+  push:
+    branches:
+      - 'release/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.12.0-alpine3.21
+
+      - name: Install
+        run: pnpm install
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Docker login
+        run: echo $CR_PAT | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        env:
+          CR_PAT: ${{ secrets.CR_PAT }} # Token do container registry (ex: GitHub Packages)
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/LucasPreviato/core-service:${{ github.ref_name }} .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/LucasPreviato/core-service:${{ github.ref_name }}
+
+      - name: Configure kubeconfig
+        run: echo "${{ secrets.KUBECONFIG_CONTENT }}" > kubeconfig.yaml
+
+      - name: Deploy to K8s
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/dev/
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:develop -n dev
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/prod/
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:main -n prod
+          elif [[ "${{ github.ref_name }}" =~ ^release/ ]]; then
+            kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/homolog/
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/SEU_USUARIO/core-service:${{ github.ref_name }} -n homolog
+          fi
