@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-config
+  namespace: dev
+data:
+  NODE_ENV: "development"
+  LOG_LEVEL: "debug"
+  PORT: "8081"

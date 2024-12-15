@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: core-service
-  namespace: dev
+  namespace: prod
 spec:
-  replicas: 1
+  replicas: 3 # Exemplo: mais réplicas em prod
   selector:
     matchLabels:
       app: core-service
@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
         - name: migrate
-          image: ghcr.io/lucaspreviato/core-service:develop
+          image: ghcr.io/lucaspreviato/core-service:main
           command: ["npx", "prisma", "migrate", "deploy"]
           env:
             - name: DATABASE_URL
@@ -25,7 +25,7 @@ spec:
                   key: DATABASE_URL
       containers:
         - name: core-container
-          image: ghcr.io/lucaspreviato/core-service:develop
+          image: ghcr.io/lucaspreviato/core-service:main
           env:
             - name: NODE_ENV
               valueFrom:
