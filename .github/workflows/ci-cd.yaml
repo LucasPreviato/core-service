@@ -3,11 +3,6 @@ name: CI/CD
 on:
   push:
     branches: [develop, main]
-    branches-ignore:
-      - 'release/*'
-  push:
-    branches:
-      - 'release/*'
 
 jobs:
   build-and-deploy:
