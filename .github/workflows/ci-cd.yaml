@@ -37,10 +37,10 @@ jobs:
           CR_PAT: ${{ secrets.CR_PAT }} # Token do container registry (ex: GitHub Packages)
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/LucasPreviato/core-service:${{ github.ref_name }} .
+        run: docker build -t ghcr.io/lucaspreviato/core-service:${{ github.ref_name }} .
 
       - name: Push Docker image
-        run: docker push ghcr.io/LucasPreviato/core-service:${{ github.ref_name }}
+        run: docker push ghcr.io/lucaspreviato/core-service:${{ github.ref_name }}
 
       - name: Configure kubeconfig
         run: echo "${{ secrets.KUBECONFIG_CONTENT }}" > kubeconfig.yaml
@@ -49,11 +49,11 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/dev/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:develop -n dev
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/lucaspreviato/core-service:develop -n dev
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/prod/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:main -n prod
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/lucaspreviato/core-service:main -n prod
           elif [[ "${{ github.ref_name }}" =~ ^release/ ]]; then
             kubectl --kubeconfig=kubeconfig.yaml apply -f kubernetes/homolog/
-            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/LucasPreviato/core-service:${{ github.ref_name }} -n homolog
+            kubectl --kubeconfig=kubeconfig.yaml set image deployment/core-service core-container=ghcr.io/lucaspreviato/core-service:${{ github.ref_name }} -n homolog
           fi
