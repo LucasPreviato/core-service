@@ -13,8 +13,21 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v3
 
+      - name: Verificar variáveis de ambiente
+        run: |
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_PASSWORD length=${#secrets.DOCKER_PASSWORD}"
+
       - name: Logar no Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          if [[ -z "$DOCKER_USERNAME" || -z "$DOCKER_PASSWORD" ]]; then
+            echo "Erro: DOCKER_USERNAME ou DOCKER_PASSWORD não estão definidos!"
+            exit 1
+          fi
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - name: Construir e empurrar imagem para Docker Hub
         run: |
@@ -27,4 +40,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
- 
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/core-service:latest
+            docker stop core_service || true
+            docker rm core_service || true
+            docker run -d --name core_service -p 3334:3334 --restart always ${{ secrets.DOCKER_USERNAME }}/core-service:latest
