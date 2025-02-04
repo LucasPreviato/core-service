@@ -54,6 +54,15 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/core-service:latest
-            docker stop core_service || true
-            docker rm core_service || true
+
+            # Verifica se o container já existe antes de parar/remover
+            if [ "$(docker ps -q -f name=core_service)" ]; then
+              echo "🛑 Parando container antigo..."
+              docker stop core_service
+              docker rm core_service
+            else
+              echo "⚠️ Nenhum container antigo encontrado, pulando parada/remoção."
+            fi
+
+            echo "🚀 Iniciando novo container..."
             docker run -d --name core_service -p 3334:3334 --restart always ${{ secrets.DOCKER_USERNAME }}/core-service:latest
