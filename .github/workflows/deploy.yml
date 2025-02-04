@@ -13,16 +13,25 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Verificar variáveis de ambiente
+      - name: Exibir Variáveis de Ambiente (Debug)
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         run: |
-          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_ACCESS_TOKEN" ]; then
-            echo "Erro: DOCKER_USERNAME ou DOCKER_ACCESS_TOKEN não estão definidos!"
+          echo "🔍 Verificando credenciais do Docker..."
+          echo "DOCKER_USERNAME: $DOCKER_USERNAME"
+          echo "DOCKER_ACCESS_TOKEN length: ${#DOCKER_ACCESS_TOKEN}"
+
+      - name: Verificar se as variáveis estão vazias
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        run: |
+          if [[ -z "$DOCKER_USERNAME" || -z "$DOCKER_ACCESS_TOKEN" ]]; then
+            echo "❌ Erro: DOCKER_USERNAME ou DOCKER_ACCESS_TOKEN não estão definidos!"
             exit 1
           else
-            echo "✅ Docker credentials configuradas corretamente!"
+            echo "✅ Variáveis carregadas corretamente!"
           fi
 
       - name: Logar no Docker Hub usando Access Token
