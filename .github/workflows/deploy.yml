@@ -14,20 +14,23 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Verificar variáveis de ambiente
-        run: |
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
-          echo "DOCKER_PASSWORD length=${#secrets.DOCKER_PASSWORD}"
-
-      - name: Logar no Docker Hub
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         run: |
-          if [[ -z "$DOCKER_USERNAME" || -z "$DOCKER_PASSWORD" ]]; then
-            echo "Erro: DOCKER_USERNAME ou DOCKER_PASSWORD não estão definidos!"
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_ACCESS_TOKEN" ]; then
+            echo "Erro: DOCKER_USERNAME ou DOCKER_ACCESS_TOKEN não estão definidos!"
             exit 1
+          else
+            echo "✅ Docker credentials configuradas corretamente!"
           fi
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Logar no Docker Hub usando Access Token
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        run: |
+          echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - name: Construir e empurrar imagem para Docker Hub
         run: |
