@@ -1,0 +1,30 @@
+name: Deploy Core-Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Logar no Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Construir e empurrar imagem para Docker Hub
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/core-service:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/core-service:latest
+
+      - name: Deploy na VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+ 
