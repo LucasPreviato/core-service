@@ -1,5 +1,5 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
-import { AppService } from './app.service';
+import { AppService } from '../../app.service';
 import { timeStamp } from 'console';
 
 @Controller()
@@ -11,7 +11,7 @@ export class AppController {
     return {
       service: 'core-service',
       status: HttpStatus.OK || 200,
-      timeStamp: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
     };
   }
 }
