@@ -18,7 +18,7 @@
     WORKDIR /app
     
     # Instala pnpm globalmente na imagem final
-    RUN npm install -g pnpm
+    RUN npm install -g pnpm@8.14.0
     
     # Copia apenas os arquivos de dependências para instalar apenas as dependências de produção
     COPY package.json pnpm-lock.yaml ./
