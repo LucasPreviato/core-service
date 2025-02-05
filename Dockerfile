@@ -3,7 +3,7 @@
     WORKDIR /app
     
     # Instala pnpm globalmente sem usar corepack
-    RUN npm install -g pnpm
+    RUN npm install -g pnpm@8.14.0
     
     # Copia apenas os arquivos de dependências para otimizar cache do Docker
     COPY package.json pnpm-lock.yaml ./
