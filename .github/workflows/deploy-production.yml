@@ -1,0 +1,60 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Login no Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        run: |
+          echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Build e Push da imagem
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/core-service:prod .
+          docker push ${{ secrets.DOCKER_USERNAME }}/core-service:prod
+
+      - name: Deploy no Production (VPS)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Parar e remover container antigo
+            if [ "$(docker ps -q -f name=core_service)" ]; then
+              docker stop core_service
+              docker rm core_service
+            fi
+
+            # Puxar a imagem
+            docker pull ${{ secrets.DOCKER_USERNAME }}/core-service:prod
+
+            # Rodar migrations
+            docker run --rm \
+              --network=projects_default \
+              -e DATABASE_URL="${DATABASE_URL_PROD}" \
+              ${{ secrets.DOCKER_USERNAME }}/core-service:prod \
+              npx prisma migrate deploy
+
+            # Subir container de produção
+            docker run -d \
+              --name core_service \
+              --network=projects_default \
+              -e DATABASE_URL="${DATABASE_URL_PROD}" \
+              -p 3334:3334 \
+              --restart always \
+              ${{ secrets.DOCKER_USERNAME }}/core-service:prod
+        env:
+          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}
