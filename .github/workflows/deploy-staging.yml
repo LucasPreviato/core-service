@@ -35,31 +35,28 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          env:
+            DATABASE_URL_HOMOLOG: ${{ secrets.DATABASE_URL_HOMOLOG }}
           script: |
-            # Parar e remover container antigo
-            if [ "$(docker ps -q -f name=core_service_staging)" ]; then
-              docker stop core_service_staging
-              docker rm core_service_staging
-            fi
+            echo "DATABASE_URL_HOMOLOG is: $DATABASE_URL_HOMOLOG"
 
-            # Puxar a imagem de staging
-            docker pull ${{ secrets.DOCKER_USERNAME }}/core-service:staging
+            # Se a var chegar aqui vazia, conserte o Secret ou a syntax
+            export DATABASE_URL="${DATABASE_URL_HOMOLOG}"
+            echo "DATABASE_URL is: $DATABASE_URL"
 
-            # Rodar migrations dentro de um container transitório
-            # Substitua "projects_default" pela rede do seu Docker (caso use Compose, verifique o nome da rede).
+            docker pull myuser/core-service:staging
+            docker stop core_service_staging || true
+            docker rm core_service_staging || true
+
             docker run --rm \
               --network=projects_default \
-              -e DATABASE_URL="${DATABASE_URL_HOMOLOG}" \
-              ${{ secrets.DOCKER_USERNAME }}/core-service:staging \
+              -e DATABASE_URL="$DATABASE_URL" \
+              myuser/core-service:staging \
               npx prisma migrate deploy
 
-            # Subir o container com a imagem de staging
             docker run -d \
-              --name core_service_staging \
               --network=projects_default \
-              -e DATABASE_URL="${DATABASE_URL_HOMOLOG}" \
+              -e DATABASE_URL="$DATABASE_URL" \
+              --name core_service_staging \
               -p 3335:3334 \
-              --restart always \
-              ${{ secrets.DOCKER_USERNAME }}/core-service:staging
-        env:
-          DATABASE_URL_HOMOLOG: ${{ secrets.DATABASE_URL_HOMOLOG }}
+              myuser/core-service:staging
